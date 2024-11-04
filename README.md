@@ -1,2 +1,1 @@
-
-# Burmese GPT
+# Burmese GPT V2
