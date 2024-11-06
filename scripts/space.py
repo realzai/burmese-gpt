@@ -9,7 +9,7 @@ st.set_page_config(
 
 # Create a sidebar with a title and a brief description
 st.sidebar.title("Burmese GPT")
-st.sidebar.write("A language model app for generating and chatting in Burmese.")
+st.sidebar.write("A language models app for generating and chatting in Burmese.")
 
 # Create a selectbox to choose the view
 view_options = ["Sampling", "Chat Interface"]
@@ -18,7 +18,7 @@ selected_view = st.sidebar.selectbox("Select a view:", view_options)
 # Create a main area
 if selected_view == "Sampling":
     st.title("Sampling")
-    st.write("Generate text using the pre-trained model:")
+    st.write("Generate text using the pre-trained models:")
 
     # Create a text input field for the prompt
     prompt = st.text_input("Prompt:", value="")
@@ -37,15 +37,15 @@ if selected_view == "Sampling":
 
 elif selected_view == "Chat Interface":
     st.title("Chat Interface")
-    st.write("Chat with the fine-tuned model:")
+    st.write("Chat with the fine-tuned models:")
 
     # Create a text input field for the user input
     user_input = st.text_input("You:", value="")
 
-    # Create a button to send the input to the model
+    # Create a button to send the input to the models
     send_button = st.button("Send")
 
-    # Create an output area to display the model's response
+    # Create an output area to display the models's response
     response_area = st.text_area("Model:", height=200, disabled=True)
 
     # Add some space between the input and output areas
