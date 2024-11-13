@@ -7,7 +7,6 @@ class ModelConfig:
     num_heads: int = 8
     num_layers: int = 4
     dropout: float = 0.1
-    max_seq_len: int = 128
 
 @dataclass
 class TrainingConfig:
