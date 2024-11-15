@@ -2,9 +2,12 @@ from datasets import load_dataset
 from transformers import AutoTokenizer
 from torch.utils.data import Dataset
 
+from burmese_gpt.config import TrainingConfig
+
+
 class BurmeseDataset(Dataset):
-    def __init__(self, split="train", max_length=128):
-        self.dataset = load_dataset("zaibutcooler/wiki-burmese", split=split)
+    def __init__(self, split="train", max_length=128,config:TrainingConfig=None):
+        self.dataset = load_dataset(config.dataset_url, split=split)
         self.tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
