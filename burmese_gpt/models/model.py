@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from burmese_gpt.config import ModelConfig
 
+
 class BurmeseGPT(nn.Module):
     def __init__(self, config: ModelConfig):
         super(BurmeseGPT, self).__init__()
@@ -18,9 +19,11 @@ class BurmeseGPT(nn.Module):
             d_model=config.embed_dim,
             nhead=config.num_heads,
             dropout=config.dropout,
-            batch_first=True
+            batch_first=True,
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=config.num_layers)
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer, num_layers=config.num_layers
+        )
 
         # Final projection layer
         self.fc = nn.Linear(config.embed_dim, config.vocab_size)

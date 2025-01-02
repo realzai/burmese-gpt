@@ -6,7 +6,7 @@ from burmese_gpt.config import TrainingConfig
 
 
 class BurmeseDataset(Dataset):
-    def __init__(self, split="train", max_length=128,config:TrainingConfig=None):
+    def __init__(self, split="train", max_length=128, config: TrainingConfig = None):
         self.dataset = load_dataset(config.dataset_url, split=split)
         self.tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         if self.tokenizer.pad_token is None:
@@ -23,9 +23,9 @@ class BurmeseDataset(Dataset):
             truncation=True,
             max_length=self.max_length,
             padding="max_length",
-            return_tensors="pt"
+            return_tensors="pt",
         )
         return {
             "input_ids": encodings["input_ids"].squeeze(),
-            "attention_mask": encodings["attention_mask"].squeeze()
+            "attention_mask": encodings["attention_mask"].squeeze(),
         }

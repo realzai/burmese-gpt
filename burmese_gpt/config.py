@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class ModelConfig:
     vocab_size: int = 30000
@@ -7,6 +8,7 @@ class ModelConfig:
     num_heads: int = 8
     num_layers: int = 4
     dropout: float = 0.1
+
 
 @dataclass
 class TrainingConfig:

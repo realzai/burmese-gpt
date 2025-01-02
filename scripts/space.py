@@ -2,9 +2,7 @@ import streamlit as st
 
 # Set up the page layout
 st.set_page_config(
-    page_title="Burmese GPT",
-    page_icon=":speech_balloon:",
-    layout="wide"
+    page_title="Burmese GPT", page_icon=":speech_balloon:", layout="wide"
 )
 
 # Create a sidebar with a title and a brief description

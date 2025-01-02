@@ -8,8 +8,9 @@ from burmese_gpt.config import TrainingConfig
 
 logger = logging.getLogger(__name__)
 
+
 class BurmeseGPTTrainer:
-    def __init__(self, model, train_loader, val_loader, config:TrainingConfig):
+    def __init__(self, model, train_loader, val_loader, config: TrainingConfig):
         """
         Trainer for BurmeseGPT model
 
@@ -32,7 +33,9 @@ class BurmeseGPTTrainer:
         self.optimizer = AdamW(
             model.parameters(),
             lr=config.learning_rate,
-            weight_decay=config.weight_decay if hasattr(config, 'weight_decay') else 0.01
+            weight_decay=(
+                config.weight_decay if hasattr(config, "weight_decay") else 0.01
+            ),
         )
 
         # Loss function (ignoring padding tokens)
@@ -59,8 +62,7 @@ class BurmeseGPTTrainer:
 
             # Calculate loss (same as original)
             loss = self.criterion(
-                outputs.reshape(-1, outputs.size(-1)),
-                targets.reshape(-1)
+                outputs.reshape(-1, outputs.size(-1)), targets.reshape(-1)
             )
 
             # Backward pass
@@ -85,8 +87,7 @@ class BurmeseGPTTrainer:
 
                 outputs = self.model(inputs)
                 loss = self.criterion(
-                    outputs.reshape(-1, outputs.size(-1)),
-                    targets.reshape(-1)
+                    outputs.reshape(-1, outputs.size(-1)), targets.reshape(-1)
                 )
                 total_loss += loss.item()
 
@@ -99,19 +100,19 @@ class BurmeseGPTTrainer:
         Returns:
             Dictionary with training metrics
         """
-        metrics = {'train_loss': [], 'val_loss': []}
-        best_loss = float('inf')
+        metrics = {"train_loss": [], "val_loss": []}
+        best_loss = float("inf")
 
         for epoch in range(1, self.config.num_epochs + 1):
             logger.info(f"Epoch {epoch}/{self.config.num_epochs}")
 
             # Training
             train_loss = self.train_epoch()
-            metrics['train_loss'].append(train_loss)
+            metrics["train_loss"].append(train_loss)
 
             # Validation
             val_loss = self.validate()
-            metrics['val_loss'].append(val_loss)
+            metrics["val_loss"].append(val_loss)
 
             logger.info(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
 
@@ -129,8 +130,11 @@ class BurmeseGPTTrainer:
 
     def save_checkpoint(self, filename: str):
         """Save model checkpoint"""
-        torch.save({
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'config': self.config
-        }, f"{self.config.checkpoint_dir}/{filename}")
+        torch.save(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "config": self.config,
+            },
+            f"{self.config.checkpoint_dir}/{filename}",
+        )
