@@ -138,3 +138,5 @@ cython_debug/
 
 # Logs
 *.log
+
+.idea
