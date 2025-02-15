@@ -19,4 +19,4 @@ class TrainingConfig:
     log_dir: str = "logs"
     save_every: int = 1
     eval_every: int = 1
-    dataset_url: str = "zaibutcooler/wiki-burmese"
+    dataset_url: str = "zaibutcooler/fine-burmese"

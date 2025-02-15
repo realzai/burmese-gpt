@@ -6,10 +6,12 @@ from burmese_gpt.models import BurmeseGPT
 VOCAB_SIZE = 119547
 CHECKPOINT_PATH = "checkpoints/best_model.pth"
 
-def download_pretrained_model(path:str):
+
+def download_pretrained_model(path: str):
     pass
 
-def load_model(path:str):
+
+def load_model(path: str):
     model_config = ModelConfig()
 
     tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
@@ -22,7 +24,7 @@ def load_model(path:str):
 
     # Load checkpoint
     checkpoint = torch.load(path, map_location="cpu")
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
     # Move to device
@@ -47,6 +49,7 @@ def generate_sample(model, tokenizer, device, prompt="မြန်မာ", max_l
 
     return tokenizer.decode(input_ids[0], skip_special_tokens=True)
 
+
 if __name__ == "__main__":
     # Download the pretrained model
     # download_pretrained_model(CHECKPOINT_PATH)
@@ -56,7 +59,7 @@ if __name__ == "__main__":
 
     while True:
         prompt = input("\nEnter prompt (or 'quit' to exit): ")
-        if prompt.lower() == 'quit':
+        if prompt.lower() == "quit":
             break
 
         print("\nGenerating...")
