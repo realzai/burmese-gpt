@@ -140,3 +140,5 @@ cython_debug/
 *.log
 
 .idea
+
+checkpoints/
