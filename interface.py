@@ -3,7 +3,7 @@ from transformers import AutoTokenizer
 import streamlit as st
 from burmese_gpt.config import ModelConfig
 from burmese_gpt.models import BurmeseGPT
-from .scripts.download import download_pretrained_model
+from scripts.download import download_pretrained_model
 import os
 
 # Model configuration
