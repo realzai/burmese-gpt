@@ -10,17 +10,17 @@ import os
 VOCAB_SIZE = 119547
 CHECKPOINT_PATH = "checkpoints/best_model.pth"
 
+if os.path.exists(CHECKPOINT_PATH):
+    st.warning("Model already exists, skipping download.")
+else:
+    st.info("Downloading model...")
+    download_pretrained_model()
+    st.success("Model downloaded successfully.")
+
 
 # Load model function (cached to avoid reloading on every interaction)
 @st.cache_resource
 def load_model():
-    if os.path.exists(CHECKPOINT_PATH):
-        st.warning("Model already exists, skipping download.")
-    else:
-        st.info("Downloading model...")
-        download_pretrained_model()
-        st.success("Model downloaded successfully.")
-
     model_config = ModelConfig()
 
     tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")

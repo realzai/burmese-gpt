@@ -15,6 +15,18 @@ To train the model, use the following command:
 python -m scripts.train
 ```
 
+## Push Model to Hugging Face Hub
+To push the trained model to the Hugging Face Hub, use the following command:
+```bash
+python -m scripts.upload
+```
+
+## Download Pre-trained Model
+To download the pre-trained model, use the following command:
+```bash
+python -m scripts.download
+```
+
 ## Sampling
 To sample text from the trained model, use the following command:
 ```bash
