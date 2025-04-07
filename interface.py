@@ -74,8 +74,8 @@ def show_download_screen():
 def main_app():
     """Main app UI after model is loaded"""
 
-    @st.cache_resource
-    def load_model():
+    def load_model_safely():
+        """Load model with proper safety settings"""
         model_config = ModelConfig()
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
 
@@ -85,7 +85,13 @@ def main_app():
         model_config.vocab_size = VOCAB_SIZE
         model = BurmeseGPT(model_config)
 
-        checkpoint = torch.load(CHECKPOINT_PATH, map_location="cpu")
+        # Attempt safe loading first
+        try:
+            checkpoint = torch.load(CHECKPOINT_PATH, map_location="cpu", weights_only=True)
+        except Exception as e:
+            st.warning("Using less secure loading method - only do this with trusted checkpoints")
+            checkpoint = torch.load(CHECKPOINT_PATH, map_location="cpu", weights_only=False)
+
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
 
@@ -93,6 +99,10 @@ def main_app():
         model.to(device)
 
         return model, tokenizer, device
+
+    @st.cache_resource
+    def load_model():
+        return load_model_safely()
 
     # Load model with spinner
     with st.spinner("Loading model..."):
