@@ -6,50 +6,37 @@ from burmese_gpt.models import BurmeseGPT
 from scripts.download import download_pretrained_model
 import os
 
-# Model configuration
+# Configuration
 VOCAB_SIZE = 119547
-CHECKPOINT_PATH = "checkpoints/best_model.pth"
+CHECKPOINT_DIR = "checkpoints"
+CHECKPOINT_PATH = os.path.join(CHECKPOINT_DIR, "best_model.pth")
 
-if os.path.exists(CHECKPOINT_PATH):
-    st.warning("Model already exists, skipping download.")
-else:
-    st.info("Downloading model...")
-    download_pretrained_model()
-    st.success("Model downloaded successfully.")
+# Create checkpoints directory if it doesn't exist
+os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
-
-# Load model function (cached to avoid reloading on every interaction)
-@st.cache_resource
-def load_model():
-    model_config = ModelConfig()
-
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    model_config.vocab_size = VOCAB_SIZE
-    model = BurmeseGPT(model_config)
-
-    # Load checkpoint
-    checkpoint = torch.load(CHECKPOINT_PATH, map_location="cpu")
-    model.load_state_dict(checkpoint["model_state_dict"])
-    model.eval()
-
-    # Move to device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
-    return model, tokenizer, device
+# --- App Layout ---
+st.set_page_config(
+    page_title="Burmese GPT",
+    page_icon=":speech_balloon:",
+    layout="wide"
+)
 
 
-def generate_sample(model, tokenizer, device, prompt="မြန်မာ", max_length=50):
+# --- Text Generation Function ---
+def generate_text(model, tokenizer, device, prompt, max_length=50, temperature=0.7):
     """Generate text from prompt"""
     input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
 
     with torch.no_grad():
         for _ in range(max_length):
             outputs = model(input_ids)
-            next_token = outputs[:, -1, :].argmax(dim=-1, keepdim=True)
+            logits = outputs[:, -1, :]
+
+            # Apply temperature
+            logits = logits / temperature
+            probs = torch.softmax(logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+
             input_ids = torch.cat((input_ids, next_token), dim=-1)
 
             if next_token.item() == tokenizer.eos_token_id:
@@ -58,94 +45,157 @@ def generate_sample(model, tokenizer, device, prompt="မြန်မာ", max_l
     return tokenizer.decode(input_ids[0], skip_special_tokens=True)
 
 
-# Set up the page layout
-st.set_page_config(
-    page_title="Burmese GPT", page_icon=":speech_balloon:", layout="wide"
-)
+# --- Download Screen ---
+def show_download_screen():
+    """Shows download screen until model is ready"""
+    st.title("Burmese GPT")
+    st.warning("Downloading required model files...")
 
-# Create a sidebar with a title and a brief description
-st.sidebar.title("Burmese GPT")
-st.sidebar.write("A language models app for generating and chatting in Burmese.")
+    progress_bar = st.progress(0)
+    status_text = st.empty()
 
-# Create a selectbox to choose the view
-view_options = ["Sampling", "Chat Interface"]
-selected_view = st.sidebar.selectbox("Select a view:", view_options)
+    try:
+        download_pretrained_model()
 
-# Load the model once (cached)
-model, tokenizer, device = load_model()
-
-# Create a main area
-if selected_view == "Sampling":
-    st.title("Sampling")
-    st.write("Generate text using the pre-trained models:")
-
-    # Create a text input field for the prompt
-    prompt = st.text_input("Prompt:", value="မြန်မာ")
-
-    # Add additional generation parameters
-    col1, col2 = st.columns(2)
-    with col1:
-        max_length = st.slider("Max Length:", min_value=10, max_value=500, value=50)
-    with col2:
-        temperature = st.slider(
-            "Temperature:", min_value=0.1, max_value=2.0, value=0.7, step=0.1
-        )
-
-    # Create a button to generate text
-    if st.button("Generate"):
-        if prompt.strip():
-            with st.spinner("Generating text..."):
-                generated = generate_sample(
-                    model=model,
-                    tokenizer=tokenizer,
-                    device=device,
-                    prompt=prompt,
-                    max_length=max_length,
-                )
-            st.text_area("Generated Text:", value=generated, height=200)
+        # Verify download completed
+        if os.path.exists(CHECKPOINT_PATH):
+            st.success("Download completed successfully!")
+            st.rerun()  # Restart the app
         else:
-            st.warning("Please enter a prompt")
+            st.error("Download failed - file not found")
+            st.stop()
 
-elif selected_view == "Chat Interface":
-    st.title("Chat Interface")
-    st.write("Chat with the fine-tuned models:")
+    except Exception as e:
+        st.error(f"Download failed: {str(e)}")
+        st.stop()
 
-    # Initialize chat history
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
 
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+# --- Main App ---
+def main_app():
+    """Main app UI after model is loaded"""
 
-    # Accept user input
-    if prompt := st.chat_input("What is up?"):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    @st.cache_resource
+    def load_model():
+        model_config = ModelConfig()
+        tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
 
-        # Display assistant response in chat message container
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = ""
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
-            with st.spinner("Thinking..."):
-                # Generate response
-                generated = generate_sample(
-                    model=model,
-                    tokenizer=tokenizer,
-                    device=device,
-                    prompt=prompt,
-                    max_length=100,
-                )
-                full_response = generated
+        model_config.vocab_size = VOCAB_SIZE
+        model = BurmeseGPT(model_config)
 
-            message_placeholder.markdown(full_response)
+        checkpoint = torch.load(CHECKPOINT_PATH, map_location="cpu")
+        model.load_state_dict(checkpoint["model_state_dict"])
+        model.eval()
 
-        # Add assistant response to chat history
-        st.session_state.messages.append(
-            {"role": "assistant", "content": full_response}
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
+
+        return model, tokenizer, device
+
+    # Load model with spinner
+    with st.spinner("Loading model..."):
+        model, tokenizer, device = load_model()
+
+    # Sidebar
+    st.sidebar.title("Burmese GPT")
+    st.sidebar.write("A language model for generating and chatting in Burmese")
+
+    # View selection
+    view_options = ["Text Generation", "Chat Mode"]
+    selected_view = st.sidebar.selectbox("Select Mode", view_options)
+
+    # Generation parameters
+    st.sidebar.header("Generation Settings")
+    max_length = st.sidebar.slider("Max Length", 20, 500, 100)
+    temperature = st.sidebar.slider("Temperature", 0.1, 2.0, 0.7, 0.1)
+
+    # Main content area
+    if selected_view == "Text Generation":
+        st.header("Burmese Text Generation")
+
+        # Prompt input
+        prompt = st.text_area(
+            "Enter your prompt in Burmese:",
+            value="မြန်မာစာပေ",
+            height=100
         )
+
+        # Generate button
+        if st.button("Generate Text"):
+            if prompt.strip():
+                with st.spinner("Generating..."):
+                    generated = generate_text(
+                        model=model,
+                        tokenizer=tokenizer,
+                        device=device,
+                        prompt=prompt,
+                        max_length=max_length,
+                        temperature=temperature
+                    )
+                st.subheader("Generated Text:")
+                st.write(generated)
+            else:
+                st.warning("Please enter a prompt")
+
+    elif selected_view == "Chat Mode":
+        st.header("Chat in Burmese")
+
+        # Initialize chat history
+        if "messages" not in st.session_state:
+            st.session_state.messages = [
+                {"role": "assistant", "content": "မင်္ဂလာပါ! ကျေးဇူးပြု၍ စကားပြောပါ။"}
+            ]
+
+        # Display chat messages
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # Chat input
+        if prompt := st.chat_input("Type your message..."):
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+
+            # Display user message
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            # Generate assistant response
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = ""
+
+                with st.spinner("Thinking..."):
+                    # Combine chat history for context
+                    chat_history = "\n".join(
+                        f"{msg['role']}: {msg['content']}"
+                        for msg in st.session_state.messages[:-1]
+                    )
+                    full_prompt = f"{chat_history}\nuser: {prompt}\nassistant:"
+
+                    # Generate response
+                    full_response = generate_text(
+                        model=model,
+                        tokenizer=tokenizer,
+                        device=device,
+                        prompt=full_prompt,
+                        max_length=max_length,
+                        temperature=temperature
+                    )
+
+                # Display response
+                message_placeholder.markdown(full_response)
+
+            # Add assistant response to chat history
+            st.session_state.messages.append(
+                {"role": "assistant", "content": full_response}
+            )
+
+
+# --- App Flow Control ---
+if not os.path.exists(CHECKPOINT_PATH):
+    show_download_screen()
+else:
+    main_app()
